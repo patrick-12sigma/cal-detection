@@ -4,7 +4,6 @@
 *.dcm
 *.log
 .ipynb_checkpoints/
-__pycache__/
 mask_rcnn_coco.h5
 .idea/
 
