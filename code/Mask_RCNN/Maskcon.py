@@ -3,8 +3,10 @@ import sys
 import random
 import numpy as np
 # import cv2
-import matplotlib
-import matplotlib.pyplot as plt
+if __name__ == '__main__':
+    
+    import matplotlib
+    import matplotlib.pyplot as plt
 
 from mrcnn import utils
 from mrcnn import visualize
@@ -14,30 +16,33 @@ from mrcnn.model import log
 from mrcnn.config import Config
 
 import skimage
-# Root directory of the project
-ROOT_DIR = '/home/sky8/cal/'
-# ROOT_DIR2 = '/data1/share/shiky/Mask_RCNN'
-img_train = os.path.join(ROOT_DIR, 'train', 'images') 
-img_val = os.path.join(ROOT_DIR, 'validation', 'images') 
 
-mask_train = os.path.join(ROOT_DIR, 'train', 'masks') 
-mask_val = os.path.join(ROOT_DIR, 'validation', 'masks') 
+if __name__ == '__main__':
+    
+    # Root directory of the project
+    ROOT_DIR = '/home/sky8/cal/'
+    # ROOT_DIR2 = '/data1/share/shiky/Mask_RCNN'
+    img_train = os.path.join(ROOT_DIR, 'train', 'images') 
+    img_val = os.path.join(ROOT_DIR, 'validation', 'images') 
+
+    mask_train = os.path.join(ROOT_DIR, 'train', 'masks') 
+    mask_val = os.path.join(ROOT_DIR, 'validation', 'masks') 
 
 
-train_imglist = os.listdir(img_train)
-val_imglist = os.listdir(img_val)
+    train_imglist = os.listdir(img_train)
+    val_imglist = os.listdir(img_val)
 
-train_count = len(train_imglist)
-val_count = len(val_imglist)
-# width = 1280
-# height = 800
-# Directory to save logs and trained model
-MODEL_DIR = os.path.join(ROOT_DIR, "logs")
+    train_count = len(train_imglist)
+    val_count = len(val_imglist)
+    # width = 1280
+    # height = 800
+    # Directory to save logs and trained model
+    MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 
 class CalConfig(Config):
     """Configuration for training on the nucleus segmentation dataset."""
     # Give the configuration a recognizable name
-    NAME = "calcification"
+    NAME = "calcification-resnet50"
 
     # NUMBER OF GPUs to use. For CPU training, use 1
     GPU_COUNT = 1
@@ -58,7 +63,7 @@ class CalConfig(Config):
 
     # Backbone network architecture
     # Supported values are: resnet50, resnet101
-    BACKBONE = "resnet101"
+    BACKBONE = "resnet50"
 
     # Input image resizing
     # Random crops of size 512x512
@@ -102,8 +107,8 @@ class CalConfig(Config):
     # Max number of final detections per image
     DETECTION_MAX_INSTANCES = 400
     
-config = CalConfig()
-  
+
+ 
  
 
    
@@ -154,44 +159,65 @@ class CalDataset(utils.Dataset):
         info = self.image_info[image_id]
         
         return info['full_name']
+
+if __name__ == '__main__':
     
-# Training dataset
-dataset_train = CalDataset()
-dataset_train.load_cal(753, img_train, mask_train, train_imglist)
-dataset_train.prepare()
+    config = CalConfig()
+    # Training dataset
+    dataset_train = CalDataset()
+    dataset_train.load_cal(753, img_train, mask_train, train_imglist)
+    dataset_train.prepare()
 
-# Validation dataset
-dataset_val = CalDataset()
-dataset_val.load_cal(200, img_val, mask_val, val_imglist)
-dataset_val.prepare()
-
-
-model = modellib.MaskRCNN(mode="training", config=config,
-                          model_dir=MODEL_DIR)
-# Train the head branches
-# Passing layers="heads" freezes all layers except the head
-# layers. You can also pass a regular expression to select
-# which layers to train by name pattern.
+    # Validation dataset
+    dataset_val = CalDataset()
+    dataset_val.load_cal(200, img_val, mask_val, val_imglist)
+    dataset_val.prepare()
 
 
-model_path = model.find_last()[1]
-# Load trained weights (fill in path to trained weights here)
-assert model_path != "", "Provide path to trained weights"
+    model = modellib.MaskRCNN(mode="training", config=config,
+                              model_dir=MODEL_DIR)
+    # Train the head branches
+    # Passing layers="heads" freezes all layers except the head
+    # layers. You can also pass a regular expression to select
+    # which layers to train by name pattern.
 
-print("Loading weights from ", model_path)
-model.load_weights(model_path, by_name=True)
+    mode = "imagenet-resnet50"
+
+    if mode == "coco":
+        model_path = "/home/sky8/cal/code/mask_rcnn_coco.h5"
+
+    if mode == "imagenet-resnet50":
+        model_path = "/home/sky8/cal/code/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5"
+
+    if mode == "imagenet-resnet101":
+        model_path = "/home/sky8/cal/code/resnet101_weights_tf.h5"
+    # 
+    elif mode == "last":
+        model_path = model.find_last()[1]
+
+
+    # Load trained weights (fill in path to trained weights here)
+    assert model_path != "", "Provide path to trained weights"
+    print("Loading weights from ", model_path)
+
+    if mode == "coco":
+        model.load_weights(model_path, by_name=True, exclude=[
+                "mrcnn_class_logits", "mrcnn_bbox_fc",
+                "mrcnn_bbox", "mrcnn_mask"])
+    else:
+        model.load_weights(model_path, by_name=True)
 
 
 
-model.train(dataset_train, dataset_val, 
-            learning_rate=config.LEARNING_RATE, 
-            epochs=20, 
-            layers='heads')
+    model.train(dataset_train, dataset_val, 
+                learning_rate=config.LEARNING_RATE, 
+                epochs=20, 
+                layers='heads')
 
 
-model.train(dataset_train, dataset_val, 
-            learning_rate=config.LEARNING_RATE / 10,
-            epochs=40, 
-            layers="all")
+    model.train(dataset_train, dataset_val, 
+                learning_rate=config.LEARNING_RATE / 10,
+                epochs=40, 
+                layers="all")
 
-print("ok")
+    print("ok")
