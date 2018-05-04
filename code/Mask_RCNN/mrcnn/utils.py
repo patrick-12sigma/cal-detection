@@ -100,15 +100,20 @@ def compute_overlaps_masks(masks1, masks2):
     masks1, masks2: [Height, Width, instances]
     '''
     # flatten masks
-    masks1 = np.reshape(masks1 > .5, (-1, masks1.shape[-1])).astype(np.float32)
-    masks2 = np.reshape(masks2 > .5, (-1, masks2.shape[-1])).astype(np.float32)
-    area1 = np.sum(masks1, axis=0)
-    area2 = np.sum(masks2, axis=0)
+    if masks1.shape == (0,28,0):
+        print("YES")
+        overlaps  = 0
+    else:
+        masks1 = np.reshape(masks1 > .5, (-1, masks1.shape[-1])).astype(np.float32)
+        masks2 = np.reshape(masks2 > .5, (-1, masks2.shape[-1])).astype(np.float32)
 
-    # intersections and union
-    intersections = np.dot(masks1.T, masks2)
-    union = area1[:, None] + area2[None, :] - intersections
-    overlaps = intersections / union
+        area1 = np.sum(masks1, axis=0)
+        area2 = np.sum(masks2, axis=0)
+
+        # intersections and union
+        intersections = np.dot(masks1.T, masks2)
+        union = area1[:, None] + area2[None, :] - intersections
+        overlaps = intersections / union
 
     return overlaps
 
@@ -772,12 +777,14 @@ def compute_ap_range(gt_box, gt_class_id, gt_mask,
                         iou_threshold=iou_threshold)
         if verbose:
             print("AP @{:.2f}:\t {:.3f}".format(iou_threshold, ap))
+        if iou_threshold==0.5:
+            ap05=ap
         AP.append(ap)
     AP = np.array(AP).mean()
     if verbose:
         print("AP @{:.2f}-{:.2f}:\t {:.3f}".format(
             iou_thresholds[0], iou_thresholds[-1], AP))
-    return AP
+    return ap05
 
 
 def compute_recall(pred_boxes, gt_boxes, iou):
