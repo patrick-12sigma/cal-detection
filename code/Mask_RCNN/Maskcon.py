@@ -54,8 +54,8 @@ class CalConfig(Config):
     NUM_CLASSES = 1 + 2  # Background + nucleus
 
     # Number of training and validation steps per epoch
-    STEPS_PER_EPOCH = train_count// IMAGES_PER_GPU
-    VALIDATION_STEPS = max(1, val_count // IMAGES_PER_GPU)
+    STEPS_PER_EPOCH = 981 // IMAGES_PER_GPU
+    VALIDATION_STEPS = max(1, 250 // IMAGES_PER_GPU)
 
     # Don't exclude based on confidence. Since we have two classes
     # then 0.5 is the minimum anyway as it picks between nucleus and BG
