@@ -42,7 +42,7 @@ if __name__ == '__main__':
 class CalConfig(Config):
     """Configuration for training on the nucleus segmentation dataset."""
     # Give the configuration a recognizable name
-    NAME = "mass-coco"
+    NAME = "mass-random-noaug"
 
     # NUMBER OF GPUs to use. For CPU training, use 1
     GPU_COUNT = 1
@@ -59,7 +59,7 @@ class CalConfig(Config):
 
     # Don't exclude based on confidence. Since we have two classes
     # then 0.5 is the minimum anyway as it picks between nucleus and BG
-    DETECTION_MIN_CONFIDENCE = 0
+    DETECTION_MIN_CONFIDENCE = 0.7
 
     # Backbone network architecture
     # Supported values are: resnet50, resnet101
@@ -70,7 +70,6 @@ class CalConfig(Config):
     IMAGE_RESIZE_MODE = "square"
     IMAGE_MIN_DIM = 512
     IMAGE_MAX_DIM = 512
-    IMAGE_MIN_SCALE = 2.0
 
     # Length of square anchor side in pixels
     RPN_ANCHOR_SCALES = (16, 32, 64, 128, 256)
@@ -81,13 +80,13 @@ class CalConfig(Config):
 
     # Non-max suppression threshold to filter RPN proposals.
     # You can increase this during training to generate more propsals.
-    RPN_NMS_THRESHOLD = 0.1
+    RPN_NMS_THRESHOLD = 0.7
 
     # How many anchors per image to use for RPN training
-    RPN_TRAIN_ANCHORS_PER_IMAGE = 64
+    RPN_TRAIN_ANCHORS_PER_IMAGE = 512
 
     # Image mean (RGB)
-    MEAN_PIXEL = np.array([43.53, 39.56, 48.22])
+    MEAN_PIXEL = np.array([53.129, 53.129, 53.129])
 
     # If enabled, resizes instance masks to a smaller size to reduce
     # memory load. Recommended when using high-resolution images.
@@ -99,14 +98,16 @@ class CalConfig(Config):
     # enough positive proposals to fill this and keep a positive:negative
     # ratio of 1:3. You can increase the number of proposals by adjusting
     # the RPN NMS threshold.
-    TRAIN_ROIS_PER_IMAGE = 128
+    TRAIN_ROIS_PER_IMAGE = 320
 
     # Maximum number of ground truth instances to use in one image
-    MAX_GT_INSTANCES = 200
+    MAX_GT_INSTANCES = 100
 
     # Max number of final detections per image
     DETECTION_MAX_INSTANCES = 400
-
+    
+    LEARNING_RATE = 0.001
+    LEARNING_MOMENTUM = 0.9
 
 class CalDataset(utils.Dataset):
     """Create customized dataset class to load data"""
@@ -178,7 +179,7 @@ if __name__ == '__main__':
     # layers. You can also pass a regular expression to select
     # which layers to train by name pattern.
 
-    mode = "last"
+    mode = "none"
 
     if mode == "specific":
         #model_path = "/home/sky8/cal/logs/calcification-coco20180419T0119/mask_rcnn_calcification-coco_0040.h5"
@@ -232,15 +233,15 @@ if __name__ == '__main__':
 
     model.train(dataset_train, dataset_val, 
                 learning_rate=config.LEARNING_RATE, 
-                epochs=120, 
-                augmentation=augmentation,
+                epochs=20, 
+                augmentation=None,
                 layers='heads')
 
 
     model.train(dataset_train, dataset_val, 
                 learning_rate=config.LEARNING_RATE / 10,
-                epochs=240, 
-                augmentation=augmentation,
+                epochs=60, 
+                augmentation=None,
                 layers="all")
 
     print("ok")
